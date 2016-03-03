@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<h1 align="center">JSInvaders</h1>
+<br>
+<br>
+<br>
+<head>
+    <meta charset="utf-8"/>
+    <title>JSInvaders</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        canvas {
+            background: #eee;
+            display: block;
+            border: 1px solid #151515;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="my_canvas" width="960" height="640"></canvas>
+
+<script src="Invader.js"></script>
+<script src="Bullet.js"></script>
+<script src="Player.js"></script>
+<script src="Controls.js"></script>
+
+<script>
+    var canvas = document.getElementById("my_canvas");
+    var context = canvas.getContext("2d");
+
+    var invaders;
+    var bullets;
+
+    var player;
+
+    var stage = 0;
+
+    function start() {
+        check_if_win();
+
+        invaders = get_invaders();
+        set_invader_speed(stage);
+
+        bullets = [];
+        set_bullet_speed(stage);
+
+        player = spawn_and_get_player(canvas.width, canvas.height);
+    }
+
+    function check_if_win() {
+        if (stage == 10) {
+            win();
+        }
+    }
+
+    function update() {
+        move_invaders(invaders, canvas.width);
+        move_bullets(bullets);
+        move_player(player, get_right_pressed(), get_left_pressed(), canvas.width);
+
+        if (get_and_falsify_should_shoot() && bullets.length < 6) {
+            bullets.push(spawn_and_get_bullet(player.x + player_width / 2, player.y))
+        }
+
+        check_invader_bullet_collision(invaders, bullets);
+        remove_offscreen_bullets(bullets);
+        next_stage_if_clear();
+
+        draw();
+
+        requestAnimationFrame(update);
+    }
+
+    function draw() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        // arguments not needed cuz javascript global namespace. Still nice to have for clarity.. I think?
+        draw_invaders(invaders, context);
+        draw_bullets(bullets, context);
+        draw_player(player, context);
+        draw_stage_number()
+    }
+
+    function draw_stage_number() {
+        context.font = "16px Arial";
+        context.fillStyle = "#0095DD";
+        context.fillText("Stage: " + (stage + 1), 8, 20);
+    }
+
+    function check_if_loss() {
+        for (var i = 0; i < invader_column_count; i++) {
+            for (var j = 0; j < invader_row_count; j++) {
+                var invader = invaders[i][j];
+
+                //if one invader is below the bottom, lose
+                if (invader.alive) {
+                    lose();
+                    return;
+                }
+            }
+        }
+    }
+
+    function lose() {
+        alert("'_>' You Lose '_>'");
+        document.location.reload();
+    }
+
+    function win() {
+        alert("(´･ω･`) You Win!! (´･ω･`)");
+        document.location.reload();
+    }
+
+    function next_stage_if_clear() {
+        for (var i = 0; i < invader_column_count; i++) {
+            for (var j = 0; j < invader_row_count; j++) {
+                var invader = invaders[i][j];
+
+                //if one invader is alive, don't start next stage yet
+                if (invader.alive) {
+                    return;
+                }
+            }
+        }
+        stage += 1;
+        start();
+    }
+
+
+    start();
+    update();
+</script>
+
+</body>
+</html>
